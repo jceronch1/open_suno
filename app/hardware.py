@@ -328,6 +328,22 @@ def recommend_vae_tiles(
     return chunk, min(64, chunk // 4)
 
 
+def devices_fingerprint(engine_cfg: dict) -> str:
+    """Cambia cuando cambian los backends del motor o el runtime CUDA (la lista de dispositivos puede variar)."""
+    bin_dir = resolve(engine_cfg["bin_dir"])
+    cuda_dir = resolve(engine_cfg["cuda_dir"])
+    parts = []
+    for f in [bin_dir / "ggml-cuda.dll", bin_dir / "ggml-vulkan.dll", bin_dir / f"ace-server{EXE}"] + (
+        sorted(cuda_dir.glob("*.dll")) if cuda_dir.exists() else []
+    ):
+        try:
+            st = f.stat()
+            parts.append(f"{f.name}:{st.st_size}:{int(st.st_mtime)}")
+        except OSError:
+            parts.append(f"{f.name}:-")
+    return "|".join(parts)
+
+
 def load_cached_devices() -> dict | None:
     try:
         return json.loads(DEVICES_CACHE.read_text(encoding="utf-8"))

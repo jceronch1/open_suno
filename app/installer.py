@@ -19,7 +19,7 @@ import sys
 import time
 
 from .downloads import RECOMMENDED, DownloadManager
-from .hardware import best_gpu, nvidia_gpus, probe_devices, save_cached_devices
+from .hardware import best_gpu, devices_fingerprint, nvidia_gpus, probe_devices, save_cached_devices
 from .paths import EXE, IS_WINDOWS, ROOT, ensure_dirs, resolve
 from .profiles import apply_profile
 from .settings import PROFILES, SettingsStore
@@ -152,6 +152,7 @@ def configure_device(settings: SettingsStore, profile: str) -> None:
         _out(f"  [AVISO] {data.get('error')}. Se usará la CPU.")
         settings.update({"engine": {"device": "CPU", "profile": "custom"}})
         return
+    data["fingerprint"] = devices_fingerprint(settings.engine)
     save_cached_devices(data)
     devices = data["devices"]
     for d in devices:
@@ -217,7 +218,10 @@ def main(argv: list[str] | None = None) -> None:
     elif cat["cuda"]["installed"]:
         _out("  [OK] Ya instalado")
     elif args.cuda or _ask(
-        "  Tienes GPU NVIDIA. Ya funciona por Vulkan; ¿instalar también el runtime CUDA (~430 MB)?", False, args.yes
+        "  Tienes GPU NVIDIA. ¿Instalar el runtime CUDA (~430 MB)? Evita atascos por falta de VRAM en canciones"
+        " largas; sin él la GPU funciona por Vulkan.",
+        True,
+        args.yes,
     ):
         _run_task(dm, dm.add_cuda())
     else:

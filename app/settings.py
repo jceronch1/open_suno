@@ -17,6 +17,9 @@ ENGINE_DEFAULTS: dict[str, Any] = {
     # "auto" deja que GGML elija; si no, nombre exacto del dispositivo GGML:
     # "CPU", "CUDA0", "Vulkan0", "Vulkan1"...
     "device": "auto",
+    # Nombre de la GPU elegida: el número (Vulkan0, Vulkan1…) puede cambiar al instalar CUDA
+    # o actualizar el motor, y con el nombre se vuelve a encontrar la misma GPU física.
+    "device_name": "",
     "bin_dir": "engine/bin",
     "cuda_dir": "engine/cuda",
     "models_dir": "models",
@@ -46,7 +49,7 @@ DEFAULTS: dict[str, Any] = {
 }
 
 # Campos de "engine" que exigen reiniciar ace-server para aplicarse.
-RESTART_KEYS = [k for k in ENGINE_DEFAULTS if k not in ("autostart", "profile")]
+RESTART_KEYS = [k for k in ENGINE_DEFAULTS if k not in ("autostart", "profile", "device_name")]
 
 # Perfiles rápidos. "device" = "gpu" se resuelve con el mejor GPU detectado.
 PROFILES: dict[str, dict[str, Any]] = {

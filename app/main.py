@@ -25,6 +25,7 @@ from .engine import EngineManager
 from .hardware import (
     best_gpu,
     cuda_runtime_present,
+    devices_fingerprint,
     load_cached_devices,
     nvidia_gpus,
     probe_devices,
@@ -51,14 +52,49 @@ _devices_lock = threading.Lock()
 
 
 def get_devices(refresh: bool = False) -> dict:
+    """Dispositivos que ve el motor. Se re-detectan si cambiaron los backends o el runtime CUDA."""
     with _devices_lock:
-        cached = None if refresh else load_cached_devices()
-        if cached and cached.get("ok"):
-            return cached
+        old = load_cached_devices()
+        fingerprint = devices_fingerprint(settings.engine)
+        if not refresh and old and old.get("ok") and old.get("fingerprint") == fingerprint:
+            return old
         data = probe_devices(settings.engine)
         if data.get("ok"):
+            data["fingerprint"] = fingerprint
             save_cached_devices(data)
+            _reconcile_device(old, data)
         return data
+
+
+def _reconcile_device(old: dict | None, new: dict) -> None:
+    """Si la numeración cambió (p. ej. Vulkan1 → Vulkan0 al instalar CUDA), vuelve a apuntar a la misma GPU."""
+    cfg = settings.engine
+    dev = cfg["device"]
+    if dev in ("auto", "CPU"):
+        return
+    want = cfg.get("device_name") or next(
+        (d["name"] for d in (old or {}).get("devices", []) if d["id"] == dev), ""
+    )
+    if not want:
+        return
+    current = next((d for d in new["devices"] if d["id"] == dev), None)
+    if current and current["name"] == want:
+        if not cfg.get("device_name"):
+            settings.update({"engine": {"device_name": want}})
+        return
+    family = "CUDA" if dev.startswith("CUDA") else "Vulkan"
+    match = next((d for d in new["devices"] if d["name"] == want and d["id"].startswith(family)), None) or next(
+        (d for d in new["devices"] if d["name"] == want and d["kind"] != "cpu"), None
+    )
+    if match:
+        settings.update({"engine": {"device": match["id"], "device_name": want}})
+        engine._log(f"[Open Suno] Cambió la numeración de dispositivos: {dev} → {match['id']} ({want})")
+
+
+def _device_name(device_id: str) -> str:
+    cached = load_cached_devices() or {}
+    d = next((x for x in cached.get("devices", []) if x["id"] == device_id), None)
+    return d["name"] if d and d["kind"] != "cpu" else ""
 
 
 def _on_installed(kind: str) -> None:
@@ -115,9 +151,9 @@ def setup_status() -> dict:
 
 
 def _autostart() -> None:
-    if not load_cached_devices() and setup_status()["engine"]:
+    if setup_status()["engine"]:
         try:
-            get_devices()
+            get_devices()  # re-detecta (y reasigna la GPU) si cambió el motor o el runtime CUDA
         except Exception:  # noqa: BLE001
             pass
     if settings.engine["autostart"] and setup_status()["ready"]:
@@ -230,6 +266,8 @@ async def api_settings_put(request: Request):
     if "engine" in patch:
         patch["engine"] = dict(patch["engine"])
         patch["engine"].setdefault("profile", "custom")
+        if "device" in patch["engine"] and "device_name" not in patch["engine"]:
+            patch["engine"]["device_name"] = _device_name(str(patch["engine"]["device"]))
     data = settings.update(patch)
     return {"settings": data, "needs_restart": engine.needs_restart()}
 

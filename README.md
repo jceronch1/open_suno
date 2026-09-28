@@ -103,8 +103,8 @@ El instalador lo hace todo solo:
 1. Crea un entorno de Python aislado (`.venv`) e instala las dependencias.
 2. Descarga el motor **acestep.cpp** para Windows (≈170 MB, incluye CPU, CUDA y Vulkan).
 3. Descarga los **4 modelos** de ACE-Step 1.5 (≈3,3 GB) y comprueba su SHA-256.
-4. Si tienes GPU NVIDIA, pregunta si quieres el runtime CUDA opcional (≈430 MB). Si dices que no,
-   la GPU se usa igualmente por Vulkan.
+4. Si tienes GPU NVIDIA, ofrece el runtime CUDA (≈430 MB, recomendado para canciones largas). Si dices
+   que no, la GPU se usa igualmente por Vulkan.
 5. Detecta tu CPU/GPU y deja configurado el mejor perfil.
 
 Verás algo así:
@@ -121,12 +121,13 @@ Verás algo así:
   [OK] acestep-v15-turbo-Q4_K_M.gguf
   ...
 [3/4] Runtime CUDA (opcional)
-  Omitido: la GPU NVIDIA se usará por Vulkan. Puedes instalarlo luego en Modelos.
+  [OK] Runtime CUDA 13 (cuBLAS)
 [4/4] Configuración CPU/GPU
-    - Vulkan0   AMD Radeon 780M Graphics (integrada)
-    - Vulkan1   NVIDIA GeForce RTX 4070 Laptop GPU · 8 GB
+    - CUDA0     NVIDIA GeForce RTX 4070 Laptop GPU · 8 GB
+    - Vulkan0   NVIDIA GeForce RTX 4070 Laptop GPU · 8 GB
+    - Vulkan1   AMD Radeon 780M Graphics (integrada)
     - CPU       AMD Ryzen 7 8845HS w/ Radeon 780M Graphics
-  [OK] Perfil «GPU equilibrado»: dispositivo Vulkan1, VAE chunk 320
+  [OK] Perfil «GPU equilibrado»: dispositivo CUDA0, VAE chunk 320
 
 Listo. Arranca Open Suno con start.bat y abre http://127.0.0.1:7870
 ```
@@ -204,6 +205,10 @@ Detalles útiles:
   tesela («VAE chunk») decide si una GPU de 8 GB se queda sin memoria. Los perfiles lo calculan solos.
 - **NVIDIA:** funciona desde el primer momento por **Vulkan**. Para el backend **CUDA** instala el runtime
   opcional (`install.bat --cuda` o **Modelos → Instalar runtime CUDA**) y elige `CUDA0` en **Motor**.
+  CUDA no es más rápido en canciones cortas, pero en GPUs de 8 GB evita los atascos por falta de VRAM en
+  canciones largas (ver [rendimiento](#rendimiento-de-referencia)).
+- Si instalas CUDA o actualizas el motor puede cambiar la numeración de las GPU (`Vulkan0`, `Vulkan1`…).
+  Open Suno guarda el nombre de tu GPU y vuelve a seleccionar la misma automáticamente.
 
 ## Cómo se usa
 
@@ -221,13 +226,24 @@ retoca la letra o descarga el LM 1.7B/4B en **Modelos**.
 
 ## Rendimiento de referencia
 
-Medido con los modelos por defecto en un portátil Ryzen 7 8845HS + RTX 4070 Laptop (8 GB):
+Medido en un portátil **Ryzen 7 8845HS + RTX 4070 Laptop (8 GB)** con los modelos por defecto, la misma
+letra, los mismos metadatos y la misma semilla. Tiempo total por canción, con los modelos ya cargados
+(las cifras de 3 y 4 min son la media de 3 repeticiones):
 
-| Dispositivo | Canción | Tiempo total |
-|---|---|---|
-| GPU (Vulkan) | 60 s con letra | ~18 s |
-| GPU (Vulkan) | 40 s instrumental, modelos ya cargados | ~6 s |
-| CPU (8 hilos) | 30 s instrumental | ~70 s |
+| Duración de la canción | GPU Vulkan · equilibrado | GPU CUDA · equilibrado | GPU Vulkan · ahorro de VRAM | CPU (8 hilos) |
+|---|---|---|---|---|
+| 30 s | 5,5 s | 5,9 s | — | ~69 s |
+| 1 min | 7,6 s | 8,7 s | — | — |
+| 2 min | 14,6 s | 17,2 s | — | — |
+| 3 min | **21,6 s** | 24,9 s | 26,4 s | — |
+| 4 min | 111 s ⚠️ | **34,8 s** | **33,4 s** | — |
+
+- Primera canción tras arrancar el motor (carga de modelos incluida, 30 s): 12,5 s en Vulkan y 10,9 s en CUDA.
+- **CUDA no acelera las canciones cortas** (el compositor LM va algo más lento que en Vulkan), pero con 8 GB
+  de VRAM evita que las canciones de 4 min se atasquen: en Vulkan, con todos los modelos cargados, la
+  difusión se queda sin VRAM y pasa de 3 s a 85 s.
+- Para canciones de 3-4 min en una GPU NVIDIA de 8 GB, lo más equilibrado es **CUDA** (o Vulkan con el
+  perfil «ahorro de VRAM»). Con más VRAM la diferencia desaparece.
 
 ## Opciones avanzadas
 
@@ -266,6 +282,7 @@ el motor y elígelo en *Ajustes avanzados → Modelos*.
 | «Necesitas Python 3.10 o superior» | Instala Python desde python.org marcando *Add python.exe to PATH* y vuelve a ejecutar `install.bat`. |
 | «Memoria insuficiente al decodificar el audio (VAE)» | En **Motor**, aplica «GPU ahorro de VRAM» o baja «VAE chunk». |
 | La GPU NVIDIA no aparece como CUDA | Es normal sin el runtime CUDA: se usa por Vulkan. Instálalo en **Modelos** si quieres CUDA. |
+| Las canciones largas tardan muchísimo más que las cortas | La GPU se queda sin VRAM. Usa CUDA o el perfil «GPU ahorro de VRAM» y cierra otros programas que usen la gráfica. |
 | El motor no arranca | Mira **Motor → Registro del motor**. Prueba el perfil CPU para descartar problemas de drivers de la GPU. |
 | Falló la descarga del motor precompilado | `install.bat --build` lo compila (requiere Visual Studio Build Tools con C++ y CMake). |
 | Descarga interrumpida o archivo dañado | Ejecuta `install.bat` otra vez: reanuda y verifica el SHA-256. |

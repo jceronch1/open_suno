@@ -1424,7 +1424,7 @@ function renderModels() {
     ? 'Instala primero el motor.'
     : c.cuda.installed
       ? `Instalado (cuBLAS ${cudaNeed}.x) en <code>${esc(c.cuda.dir)}</code>. Detecta dispositivos en Motor para ver la GPU CUDA.`
-      : `El backend CUDA de este motor necesita cuBLAS ${cudaNeed}.x. Se descarga de PyPI (paquetes oficiales de NVIDIA, ≈430 MB). <b>No es imprescindible</b>: tu GPU también funciona por Vulkan.`;
+      : `El backend CUDA de este motor necesita cuBLAS ${cudaNeed}.x. Se descarga de PyPI (paquetes oficiales de NVIDIA, ≈430 MB). No acelera las canciones cortas, pero con 8 GB de VRAM evita que las largas (4 min) se atasquen por falta de memoria. Sin él, tu GPU funciona por Vulkan.`;
   $('#cudaDownload').disabled = !cudaNeed || c.cuda.installed;
 
   // pestañas por rol

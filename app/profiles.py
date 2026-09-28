@@ -42,6 +42,8 @@ def profile_values(settings, name: str, devices: list[dict]) -> dict:
         tiles = recommend_vae_tiles(dev.get("vram_mb"), resident, cap)
     if tiles:
         values["vae_chunk"], values["vae_overlap"] = tiles
+    dev = next((d for d in devices if d["id"] == values["device"]), None)
+    values["device_name"] = dev["name"] if dev and dev["kind"] != "cpu" else ""
     values["profile"] = name
     return values
 
