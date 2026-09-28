@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import socket
 import sys
 import threading
 import time
@@ -21,6 +22,16 @@ def _already_running(url: str) -> bool:
         return httpx.get(url + "/api/state", timeout=1.5).json().get("version") is not None
     except (httpx.HTTPError, ValueError):
         return False
+
+
+def _port_free(host: str, port: int) -> bool:
+    family = socket.AF_INET6 if ":" in host else socket.AF_INET
+    with socket.socket(family, socket.SOCK_STREAM) as s:
+        try:
+            s.bind((host, port))
+            return True
+        except OSError:
+            return False
 
 
 def main() -> None:
@@ -49,6 +60,14 @@ def main() -> None:
         if open_browser:
             webbrowser.open(url)
         return
+
+    if not _port_free(args.host, args.port):
+        print(
+            f"\n  [ERROR] El puerto {args.port} lo está usando otro programa.\n"
+            f"  Arranca Open Suno en otro puerto, por ejemplo:  start.bat --port {args.port + 10}\n",
+            flush=True,
+        )
+        sys.exit(1)
 
     if args.allow_remote_admin:
         os.environ["OPENSUNO_ALLOW_REMOTE_ADMIN"] = "1"
