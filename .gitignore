@@ -1,0 +1,19 @@
+# Entorno de Python
+.venv/
+__pycache__/
+*.pyc
+
+# Datos del usuario (ajustes, biblioteca, registro del motor)
+data/
+
+# Se descargan con install.bat / install.sh
+models/*.gguf
+models/*.part
+engine/bin/
+engine/bin.new/
+engine/cuda/
+engine/src/
+
+# Adaptadores LoRA del usuario
+adapters/*
+!adapters/.gitkeep

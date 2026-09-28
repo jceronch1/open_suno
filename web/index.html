@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Open Suno</title>
+  <meta name="description" content="Creación musical local con ACE-Step 1.5 (acestep.cpp) en CPU o GPU">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23ff5a7a'/%3E%3Cstop offset='1' stop-color='%237c5cff'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='8' fill='url(%23g)'/%3E%3Cpath d='M7 17h3l2-6 3 12 3-9 2 5 2-2h3' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="app.css?v=1.1.0">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff5a7a"/><stop offset="1" stop-color="#7c5cff"/></linearGradient>
+  </defs>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4.5" height="16" rx="1.2" fill="currentColor" stroke="none"/><rect x="13.5" y="4" width="4.5" height="16" rx="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M19 20 9 12l10-8z" fill="currentColor"/><path d="M5 19V5"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="m5 4 10 8-10 8z" fill="currentColor"/><path d="M19 5v14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+  <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="19" cy="12" r="1.2" fill="currentColor"/><circle cx="5" cy="12" r="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0l1.58 6.14a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96l-6.14 1.58a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M21 4h-7M10 4H3M21 12h-9M8 12H3M21 20h-5M12 20H3M14 2v4M8 10v4M16 18v4"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+  <symbol id="i-library" viewBox="0 0 24 24"><path d="m16 6 4 14M12 6v14M8 8v12M4 4v16"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+  <symbol id="i-reuse" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24"><path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.41 7.59A1.4 1.4 0 0 1 5.42 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.42a1.4 1.4 0 0 1 .99.41l3.39 3.39A.7.7 0 0 0 11 19.3z"/><path d="M16 9a5 5 0 0 1 0 6M19.36 18.36a9 9 0 0 0 0-12.72"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24"><path d="M11 4.7a.7.7 0 0 0-1.2-.5L6.41 7.59A1.4 1.4 0 0 1 5.42 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.42a1.4 1.4 0 0 1 .99.41l3.39 3.39A.7.7 0 0 0 11 19.3z"/><path d="m22 9-6 6M16 9l6 6"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-dice" viewBox="0 0 24 24"><rect width="12" height="12" x="2" y="10" rx="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3l-5-4.92a2.24 2.24 0 0 0-3 0L10 6"/><path d="M6 18h.01M10 14h.01M15 6h.01M18 9h.01"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 17 6-6-6-6M12 19h8"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect width="14" height="14" x="5" y="5" rx="2"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-wave" viewBox="0 0 24 24"><path d="M2 13a2 2 0 0 0 2-2V7a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0V4a2 2 0 0 1 4 0v13a2 2 0 0 0 4 0v-4a2 2 0 0 1 2-2"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-unlock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-queue" viewBox="0 0 24 24"><path d="M21 15V6"/><circle cx="18.5" cy="15.5" r="2.5"/><path d="M12 12H3M16 6H3M12 18H3"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" fill="url(#brandGrad)" stroke="none"/><path d="M7 17h3l2-6 3 12 3-9 2 5 2-2h3" fill="none" stroke="#fff" stroke-width="2.2"/></symbol>
+</svg>
+
+<div class="app">
+  <!-- ============================== BARRA LATERAL ============================== -->
+  <aside class="sidebar">
+    <a class="brand" href="#create" aria-label="Open Suno, inicio">
+      <svg class="brand-logo"><use href="#i-logo"/></svg>
+      <span>Open <b>Suno</b></span>
+    </a>
+    <nav class="nav" aria-label="Secciones">
+      <a href="#create" data-view="create"><svg><use href="#i-sparkles"/></svg><span>Crear</span></a>
+      <a href="#library" data-view="library"><svg><use href="#i-library"/></svg><span>Biblioteca</span><em class="nav-badge" id="libCount"></em></a>
+      <a href="#engine" data-view="engine"><svg><use href="#i-cpu"/></svg><span>Motor</span></a>
+      <a href="#models" data-view="models"><svg><use href="#i-package"/></svg><span>Modelos</span><em class="nav-dot" id="setupDot" hidden></em></a>
+    </nav>
+    <div class="sidebar-foot">
+      <button class="engine-pill" id="enginePill" type="button" title="Estado del motor">
+        <i class="dot"></i>
+        <span class="engine-pill-text"><b id="pillState">Motor</b><small id="pillDevice">—</small></span>
+      </button>
+      <button class="icon-btn" id="themeBtn" type="button" aria-label="Cambiar tema"><svg><use href="#i-sun"/></svg></button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- ================================ CREAR ================================ -->
+    <section class="view" id="view-create" aria-labelledby="createTitle">
+      <div class="create-layout">
+        <div class="create-form">
+          <header class="view-head">
+            <div>
+              <h1 id="createTitle">Crear canción</h1>
+              <p class="sub">Describe el estilo, escribe (o genera) la letra y deja que ACE-Step la componga.</p>
+            </div>
+            <div class="seg" id="modeSeg" role="tablist" aria-label="Modo">
+              <button type="button" role="tab" data-mode="simple">Simple</button>
+              <button type="button" role="tab" data-mode="custom">Personalizado</button>
+              <button type="button" role="tab" data-mode="audio">Audio → Audio</button>
+            </div>
+          </header>
+
+          <div class="preset-bar card">
+            <svg class="ico"><use href="#i-sliders"/></svg>
+            <label class="sr-only" for="presetSelect">Configuración guardada</label>
+            <select id="presetSelect"><option value="">Configuraciones guardadas…</option></select>
+            <button class="btn ghost sm" id="presetSave" type="button"><svg><use href="#i-save"/></svg>Guardar</button>
+            <button class="btn ghost sm" id="presetDelete" type="button" disabled><svg><use href="#i-trash"/></svg></button>
+            <button class="btn ghost sm" id="formReset" type="button" title="Restablecer valores por defecto"><svg><use href="#i-reuse"/></svg>Restablecer</button>
+          </div>
+
+          <!-- Descripción -->
+          <div class="card field-card">
+            <div class="label-row">
+              <label for="f-caption" id="captionLabel">Estilo y descripción</label>
+              <button class="btn ghost xs" id="inspireBtn" type="button"><svg><use href="#i-dice"/></svg>Inspírame</button>
+            </div>
+            <textarea id="f-caption" data-field="caption" rows="3" maxlength="2000"
+              placeholder="Ej.: pop latino alegre con guitarra acústica, congas y voz femenina cálida, estribillo pegadizo"></textarea>
+            <div class="chips" id="styleChips" aria-label="Añadir estilo"></div>
+            <div class="inline-opts">
+              <label class="switch"><input type="checkbox" id="instrumental"><span></span>Instrumental</label>
+              <label class="compact">
+                <span>Voz</span>
+                <select data-field="vocal_language" id="f-lang"></select>
+              </label>
+              <label class="compact">
+                <span>Duración</span>
+                <input type="number" data-field="duration" id="f-duration" min="10" max="600" step="1" placeholder="auto" inputmode="numeric">
+                <em>s</em>
+              </label>
+            </div>
+          </div>
+
+          <!-- Letra -->
+          <div class="card field-card mode-custom mode-audio" id="lyricsCard">
+            <div class="label-row">
+              <label for="f-lyrics">Letra</label>
+              <div class="btn-row">
+                <button class="btn ghost xs" id="lyricsAiBtn" type="button" title="El LM escribe la letra y los metadatos a partir de la descripción"><svg><use href="#i-sparkles"/></svg>Escribir con IA</button>
+                <button class="btn ghost xs" id="lyricsFormatBtn" type="button" title="El LM ordena tu letra y deduce BPM, tonalidad y duración"><svg><use href="#i-wave"/></svg>Dar formato</button>
+              </div>
+            </div>
+            <div class="tagbar" id="tagBar" aria-label="Insertar sección"></div>
+            <textarea id="f-lyrics" data-field="lyrics" rows="11" spellcheck="true"
+              placeholder="Déjala vacía y el LM escribirá la letra.&#10;&#10;[Verse]&#10;Primera estrofa…&#10;&#10;[Chorus]&#10;Estribillo…"></textarea>
+            <div class="field-foot"><span id="lyricsStats">0 líneas</span><span class="hint">Usa etiquetas [Verse], [Chorus]… para dar estructura.</span></div>
+            <p class="hint lm-note" id="lmNote" hidden>El LM 0.6B es muy rápido pero su letra puede salir irregular: repite «Escribir con IA», retócala a mano o usa el LM 1.7B/4B para letras mejores.</p>
+          </div>
+
+          <!-- Metadatos -->
+          <div class="card field-card mode-custom mode-audio">
+            <div class="label-row"><span class="label">Metadatos musicales</span><span class="hint">Vacío = lo decide el LM</span></div>
+            <div class="grid-3">
+              <label class="fld"><span>BPM</span><input type="number" data-field="bpm" min="30" max="300" step="1" placeholder="auto" inputmode="numeric"></label>
+              <label class="fld"><span>Tonalidad</span><select data-field="keyscale" id="f-key"></select></label>
+              <label class="fld"><span>Compás</span>
+                <select data-field="timesignature">
+                  <option value="">auto</option><option value="2">2/4</option><option value="3">3/4</option><option value="4">4/4</option><option value="6">6/8</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <!-- Audio → Audio -->
+          <div class="card field-card mode-audio" id="audioCard">
+            <span class="label">Tarea</span>
+            <div class="task-grid" id="taskGrid" role="radiogroup" aria-label="Tarea"></div>
+            <input type="hidden" data-field="task_type" id="f-task" value="cover">
+            <div class="warn" id="taskWarn" hidden><svg><use href="#i-alert"/></svg><span></span></div>
+
+            <span class="label">Audio de origen</span>
+            <div class="source-row">
+              <label class="dropzone" id="srcDrop">
+                <input type="file" id="srcFile" accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a">
+                <svg><use href="#i-upload"/></svg>
+                <span id="srcDropText"><b>Arrastra un audio</b> o haz clic (WAV, MP3, FLAC, OGG…)</span>
+              </label>
+              <div class="or">o</div>
+              <label class="fld grow"><span>Desde la biblioteca</span><select id="srcSong"><option value="">— Elegir canción —</option></select></label>
+            </div>
+            <audio id="srcPreview" controls hidden></audio>
+
+            <div class="grid-2 task-opt" data-tasks="cover cover-nofsq">
+              <label class="fld"><span>Fuerza del original <output data-for="audio_cover_strength"></output></span>
+                <input type="range" data-field="audio_cover_strength" min="0" max="1" step="0.05" value="1"></label>
+              <label class="fld"><span>Parecido inicial <output data-for="cover_noise_strength"></output></span>
+                <input type="range" data-field="cover_noise_strength" min="0" max="1" step="0.05" value="0"></label>
+            </div>
+            <div class="grid-2 task-opt" data-tasks="repaint lego">
+              <label class="fld"><span>Inicio de la región (s)</span><input type="number" data-field="repainting_start" step="0.1" value="0"></label>
+              <label class="fld"><span>Fin (s, −1 = final)</span><input type="number" data-field="repainting_end" step="0.1" value="-1"></label>
+              <p class="hint span-2">Un inicio negativo extiende antes del audio; un fin mayor que la duración lo alarga después.</p>
+            </div>
+            <div class="grid-2 task-opt" data-tasks="lego extract complete">
+              <label class="fld"><span>Pista / instrumento</span><select data-field="track" id="f-track"></select></label>
+            </div>
+          </div>
+
+          <!-- Avanzado -->
+          <details class="card adv" id="advanced">
+            <summary><svg><use href="#i-sliders"/></svg>Ajustes avanzados<span class="adv-sum" id="advSummary"></span><svg class="chev"><use href="#i-chevron"/></svg></summary>
+            <div class="tabs" role="tablist">
+              <button type="button" data-tab="models" role="tab">Modelos</button>
+              <button type="button" data-tab="lm" role="tab">Compositor (LM)</button>
+              <button type="button" data-tab="dit" role="tab">Difusión (DiT)</button>
+              <button type="button" data-tab="out" role="tab">Salida</button>
+            </div>
+
+            <div class="tab-pane" data-pane="models">
+              <div class="grid-2">
+                <label class="fld"><span>Modelo LM</span><select data-field="lm_model" id="f-lm"></select></label>
+                <label class="fld"><span>Modelo DiT</span><select data-field="synth_model" id="f-dit"></select></label>
+                <label class="fld"><span>Adaptador LoRA</span><select data-field="adapter" id="f-adapter"><option value="">Ninguno</option></select></label>
+                <label class="fld"><span>Escala LoRA <output data-for="adapter_scale"></output></span><input type="range" data-field="adapter_scale" min="0" max="2" step="0.05" value="1"></label>
+              </div>
+              <span class="label">Referencia de timbre <em class="hint">(opcional: imita el sonido de otro audio)</em></span>
+              <div class="source-row">
+                <label class="dropzone sm" id="refDrop">
+                  <input type="file" id="refFile" accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a">
+                  <svg><use href="#i-upload"/></svg><span id="refDropText">Subir audio de referencia</span>
+                </label>
+                <div class="or">o</div>
+                <label class="fld grow"><span>Desde la biblioteca</span><select id="refSong"><option value="">— Ninguna —</option></select></label>
+              </div>
+            </div>
+
+            <div class="tab-pane" data-pane="lm">
+              <label class="switch block"><input type="checkbox" data-field="use_lm" checked><span></span>Usar el LM para componer (letra, metadatos y códigos de audio)</label>
+              <p class="hint">Sin LM, el DiT genera directamente desde ruido: más rápido pero con menos estructura. En Cover/Repintar/Extraer el LM no se usa.</p>
+              <div class="grid-2">
+                <label class="fld"><span>Temperatura <output data-for="lm_temperature"></output></span><input type="range" data-field="lm_temperature" min="0.1" max="1.5" step="0.05" value="0.85"></label>
+                <label class="fld"><span>CFG del LM <output data-for="lm_cfg_scale"></output></span><input type="range" data-field="lm_cfg_scale" min="1" max="5" step="0.1" value="2"></label>
+                <label class="fld"><span>Top-p <output data-for="lm_top_p"></output></span><input type="range" data-field="lm_top_p" min="0.1" max="1" step="0.01" value="0.9"></label>
+                <label class="fld"><span>Top-k <em class="hint">(0 = off)</em></span><input type="number" data-field="lm_top_k" min="0" max="500" step="1" value="0"></label>
+                <label class="fld"><span>Variaciones del LM <em class="hint" id="maxBatchHint"></em></span><input type="number" data-field="lm_batch_size" min="1" max="8" step="1" value="1"></label>
+                <label class="fld"><span>Semilla LM <em class="hint">(−1 = aleatoria)</em></span><input type="number" data-field="lm_seed" step="1" value="-1"></label>
+              </div>
+              <label class="fld"><span>Prompt negativo</span><input type="text" data-field="lm_negative_prompt" placeholder="Ej.: low quality, distorted vocals"></label>
+              <label class="switch block"><input type="checkbox" data-field="use_cot_caption" checked><span></span>Permitir que el LM enriquezca la descripción</label>
+            </div>
+
+            <div class="tab-pane" data-pane="dit">
+              <div class="grid-3">
+                <label class="fld"><span>Pasos</span><input type="number" data-field="inference_steps" min="1" max="100" step="1" placeholder="auto" id="f-steps"></label>
+                <label class="fld"><span>Guidance</span><input type="number" data-field="guidance_scale" min="1" max="15" step="0.1" placeholder="auto" id="f-guid"></label>
+                <label class="fld"><span>Shift</span><input type="number" data-field="shift" min="0.5" max="10" step="0.1" placeholder="auto" id="f-shift"></label>
+                <label class="fld"><span>Solver</span>
+                  <select data-field="solver">
+                    <option value="euler">Euler (determinista)</option>
+                    <option value="sde">SDE ancestral (más variación)</option>
+                    <option value="dpm3m">DPM++ 3M</option>
+                    <option value="stork4">STORK 4</option>
+                  </select>
+                </label>
+                <label class="fld"><span>Sub-pasos STORK</span><input type="number" data-field="stork_substeps" min="1" max="50" step="1" value="10"></label>
+                <label class="fld"><span>Variaciones por canción</span><input type="number" data-field="synth_batch_size" min="1" max="9" step="1" value="1"></label>
+              </div>
+              <div class="seed-row">
+                <label class="fld grow"><span>Semilla <em class="hint">(−1 = aleatoria)</em></span><input type="number" data-field="seed" id="f-seed" step="1" value="-1"></label>
+                <button class="icon-btn" type="button" id="seedDice" aria-label="Semilla aleatoria nueva" title="Fijar una semilla aleatoria"><svg><use href="#i-dice"/></svg></button>
+                <button class="icon-btn" type="button" id="seedReset" aria-label="Semilla aleatoria en cada generación" title="Aleatoria en cada generación"><svg><use href="#i-unlock"/></svg></button>
+              </div>
+              <details class="sub-adv">
+                <summary>Experto: corrección DCW, latentes y calendario</summary>
+                <div class="grid-3">
+                  <label class="fld"><span>Modo DCW</span>
+                    <select data-field="dcw_mode"><option value="low">low</option><option value="high">high</option><option value="double">double</option><option value="pix">pix</option></select></label>
+                  <label class="fld"><span>DCW escala <em class="hint">(0 = off, 0.1 típico)</em></span><input type="number" data-field="dcw_scaler" min="0" max="1" step="0.01" value="0"></label>
+                  <label class="fld"><span>DCW alta</span><input type="number" data-field="dcw_high_scaler" min="0" max="1" step="0.01" value="0"></label>
+                  <label class="fld"><span>Latent shift</span><input type="number" data-field="latent_shift" step="0.01" value="0"></label>
+                  <label class="fld"><span>Latent rescale</span><input type="number" data-field="latent_rescale" step="0.01" value="1"></label>
+                </div>
+                <label class="fld"><span>Timesteps personalizados <em class="hint">(CSV, sustituye pasos y shift)</em></span><input type="text" data-field="custom_timesteps" placeholder="0.97,0.76,0.615,0.5,0.395,0.28,0.18,0.085,0"></label>
+              </details>
+            </div>
+
+            <div class="tab-pane" data-pane="out">
+              <div class="grid-3">
+                <label class="fld"><span>Formato</span>
+                  <select data-field="output_format"><option value="mp3">MP3</option><option value="wav16">WAV 16 bits</option><option value="wav24">WAV 24 bits</option><option value="wav32">WAV 32 bits float</option></select></label>
+                <label class="fld"><span>Bitrate MP3</span>
+                  <select data-field="mp3_bitrate"><option>96</option><option selected>128</option><option>160</option><option>192</option><option>256</option><option>320</option></select></label>
+                <label class="fld"><span>Normalización (peak clip)</span>
+                  <select data-field="peak_clip"><option value="0">0 · pico exacto</option><option value="10" selected>10 · por defecto</option><option value="100">100 · más volumen</option><option value="999">999 · máximo</option></select></label>
+              </div>
+              <label class="fld"><span>Título <em class="hint">(opcional; si no, se toma de la letra)</em></span><input type="text" data-field="title" maxlength="120" placeholder="Automático"></label>
+            </div>
+          </details>
+
+          <div class="create-bar">
+            <div class="create-info" id="createInfo"></div>
+            <button class="btn primary lg" id="createBtn" type="button"><svg><use href="#i-sparkles"/></svg><span>Crear</span></button>
+          </div>
+        </div>
+
+        <aside class="create-side">
+          <div class="card side-card">
+            <div class="side-head"><h2><svg><use href="#i-queue"/></svg>Cola</h2><button class="btn ghost xs" id="jobsClear" type="button">Limpiar</button></div>
+            <div id="jobList" class="job-list"><p class="empty">Aún no has creado nada. Tu primera canción aparecerá aquí.</p></div>
+          </div>
+          <div class="card side-card">
+            <div class="side-head"><h2><svg><use href="#i-music"/></svg>Recientes</h2><a class="btn ghost xs" href="#library">Ver todo</a></div>
+            <div id="recentList" class="song-rows"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <!-- ============================== BIBLIOTECA ============================== -->
+    <section class="view" id="view-library" aria-labelledby="libTitle">
+      <header class="view-head">
+        <div>
+          <h1 id="libTitle">Biblioteca</h1>
+          <p class="sub" id="libStats">—</p>
+        </div>
+        <div class="lib-tools">
+          <label class="search"><svg><use href="#i-search"/></svg><input type="search" id="libSearch" placeholder="Buscar por título, estilo o letra" aria-label="Buscar"></label>
+          <button class="btn ghost sm toggle" id="libFav" type="button" aria-pressed="false"><svg><use href="#i-heart"/></svg>Favoritas</button>
+          <button class="btn ghost sm" type="button" id="libFolder"><svg><use href="#i-folder"/></svg>Carpeta</button>
+        </div>
+      </header>
+      <div class="song-grid" id="songGrid"></div>
+    </section>
+
+    <!-- ================================ MOTOR ================================ -->
+    <section class="view" id="view-engine" aria-labelledby="engTitle">
+      <header class="view-head">
+        <div>
+          <h1 id="engTitle">Motor</h1>
+          <p class="sub">acestep.cpp (GGML) · elige CPU o GPU y ajusta memoria y rendimiento.</p>
+        </div>
+      </header>
+
+      <div class="restart-banner" id="restartBanner" hidden>
+        <svg><use href="#i-alert"/></svg>
+        <span>Hay cambios guardados que se aplican al reiniciar el motor.</span>
+        <button class="btn primary sm" id="restartNow" type="button"><svg><use href="#i-refresh"/></svg>Reiniciar ahora</button>
+      </div>
+
+      <div class="engine-grid">
+        <div class="card status-card" id="statusCard">
+          <div class="status-top">
+            <div class="status-orb" id="statusOrb"><svg><use href="#i-power"/></svg></div>
+            <div>
+              <div class="status-state" id="engState">—</div>
+              <div class="status-sub" id="engSub">—</div>
+            </div>
+          </div>
+          <dl class="kv" id="engKv"></dl>
+          <div class="btn-row">
+            <button class="btn primary sm" id="engStart" type="button"><svg><use href="#i-power"/></svg>Iniciar</button>
+            <button class="btn ghost sm" id="engRestart" type="button"><svg><use href="#i-refresh"/></svg>Reiniciar</button>
+            <button class="btn ghost sm" id="engStop" type="button"><svg><use href="#i-stop"/></svg>Detener</button>
+            <a class="btn ghost sm" id="engWebui" target="_blank" rel="noopener"><svg><use href="#i-external"/></svg>WebUI nativa</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2><svg><use href="#i-zap"/></svg>Dispositivo de cómputo</h2>
+            <button class="btn ghost xs" id="devRefresh" type="button"><svg><use href="#i-refresh"/></svg>Detectar</button></div>
+          <div class="device-list" id="deviceList" role="radiogroup" aria-label="Dispositivo"></div>
+          <div class="warn" id="cudaHint" hidden><svg><use href="#i-info"/></svg>
+            <span>Tu GPU NVIDIA funciona ya por <b>Vulkan</b>. Para usar el backend <b>CUDA</b> instala el runtime CUDA desde <a href="#models">Modelos</a>.</span></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-head"><h2><svg><use href="#i-sliders"/></svg>Perfiles rápidos</h2><span class="hint">Aplican dispositivo y memoria; el tamaño de tesela del VAE se calcula según tu VRAM/RAM.</span></div>
+          <div class="profile-grid" id="profileGrid"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2><svg><use href="#i-cpu"/></svg>Memoria y rendimiento</h2></div>
+          <form class="eng-form" id="engForm" autocomplete="off">
+            <label class="switch block"><input type="checkbox" data-eng="keep_loaded"><span></span>Mantener modelos cargados <em class="hint">(más rápido, más memoria)</em></label>
+            <div class="grid-2">
+              <label class="fld"><span>VAE chunk <em class="hint">(frames por tesela)</em></span><input type="number" data-eng="vae_chunk" min="64" max="4096" step="64"></label>
+              <label class="fld"><span>VAE overlap</span><input type="number" data-eng="vae_overlap" min="0" max="512" step="8"></label>
+              <label class="fld"><span>Lote máximo del LM</span><input type="number" data-eng="max_batch" min="1" max="16" step="1"></label>
+              <label class="fld"><span>Caché KV (tokens)</span><input type="number" data-eng="max_seq" min="2048" max="32768" step="1024"></label>
+            </div>
+            <label class="switch block"><input type="checkbox" data-eng="flash_attention"><span></span>Flash attention</label>
+            <label class="switch block"><input type="checkbox" data-eng="fsm"><span></span>Decodificación restringida (FSM) de metadatos</label>
+            <label class="switch block"><input type="checkbox" data-eng="batch_cfg"><span></span>CFG en lote <em class="hint">(desactivar ahorra memoria)</em></label>
+            <label class="switch block"><input type="checkbox" data-eng="clamp_fp16"><span></span>Limitar a rango FP16 <em class="hint">(para GPU con problemas de precisión)</em></label>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2><svg><use href="#i-folder"/></svg>Red y rutas</h2></div>
+          <form class="eng-form" id="engForm2" autocomplete="off">
+            <div class="grid-2">
+              <label class="fld"><span>Host del motor</span><input type="text" data-eng="host"></label>
+              <label class="fld"><span>Puerto del motor</span><input type="number" data-eng="port" min="1024" max="65535"></label>
+            </div>
+            <label class="fld"><span>Carpeta de modelos</span><input type="text" data-eng="models_dir"></label>
+            <label class="fld"><span>Carpeta de adaptadores LoRA</span><input type="text" data-eng="adapters_dir"></label>
+            <label class="fld"><span>Carpeta de binarios <em class="hint">(usa tu propia compilación si quieres)</em></span><input type="text" data-eng="bin_dir"></label>
+            <label class="fld"><span>Carpeta del runtime CUDA</span><input type="text" data-eng="cuda_dir"></label>
+            <label class="switch block"><input type="checkbox" data-eng="autostart"><span></span>Arrancar el motor al abrir Open Suno</label>
+          </form>
+        </div>
+
+        <div class="card span-2 save-card">
+          <span class="hint" id="engDirty">Sin cambios.</span>
+          <div class="btn-row">
+            <button class="btn ghost sm" id="engSave" type="button"><svg><use href="#i-save"/></svg>Guardar</button>
+            <button class="btn primary sm" id="engSaveRestart" type="button"><svg><use href="#i-refresh"/></svg>Guardar y reiniciar</button>
+          </div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-head"><h2><svg><use href="#i-cpu"/></svg>Hardware</h2><span class="hint" id="hwOs"></span></div>
+          <div class="hw-grid" id="hwGrid"></div>
+        </div>
+
+        <div class="card span-2">
+          <div class="card-head"><h2><svg><use href="#i-terminal"/></svg>Registro del motor</h2>
+            <div class="btn-row">
+              <label class="search sm"><svg><use href="#i-search"/></svg><input type="search" id="logFilter" placeholder="Filtrar" aria-label="Filtrar registro"></label>
+              <label class="switch sm"><input type="checkbox" id="logFollow" checked><span></span>Seguir</label>
+              <button class="btn ghost xs" id="logClear" type="button">Limpiar</button>
+            </div>
+          </div>
+          <pre class="console" id="console" tabindex="0" aria-label="Registro del motor"></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- =============================== MODELOS =============================== -->
+    <section class="view" id="view-models" aria-labelledby="modTitle">
+      <header class="view-head">
+        <div>
+          <h1 id="modTitle">Modelos y motor</h1>
+          <p class="sub">Descarga los binarios de acestep.cpp y los GGUF de ACE-Step 1.5 desde Hugging Face.</p>
+        </div>
+        <button class="btn ghost sm" id="catRefresh" type="button"><svg><use href="#i-refresh"/></svg>Actualizar catálogo</button>
+      </header>
+
+      <div class="models-top">
+        <div class="card setup-card">
+          <div class="card-head"><h2><svg><use href="#i-check"/></svg>Instalación</h2></div>
+          <ul class="checklist" id="checklist"></ul>
+          <button class="btn primary sm" id="installMissing" type="button"><svg><use href="#i-download"/></svg>Descargar lo que falta</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2><svg><use href="#i-cpu"/></svg>Motor acestep.cpp</h2></div>
+          <p class="hint" id="engBinInfo">—</p>
+          <div class="btn-row">
+            <button class="btn ghost sm" id="engDownload" type="button"><svg><use href="#i-download"/></svg>Descargar / actualizar</button>
+            <button class="btn ghost sm" data-folder="engine" type="button"><svg><use href="#i-folder"/></svg>Abrir carpeta</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2><svg><use href="#i-zap"/></svg>Runtime CUDA <em class="hint">(opcional, NVIDIA)</em></h2></div>
+          <p class="hint" id="cudaInfo">—</p>
+          <div class="btn-row">
+            <button class="btn ghost sm" id="cudaDownload" type="button"><svg><use href="#i-download"/></svg>Instalar runtime CUDA</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="dlCard" hidden>
+        <div class="card-head"><h2><svg><use href="#i-download"/></svg>Descargas</h2>
+          <div class="btn-row"><button class="btn ghost xs" id="dlCancelAll" type="button">Cancelar todo</button><button class="btn ghost xs" id="dlClear" type="button">Limpiar</button></div></div>
+        <div id="dlList" class="dl-list"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h2><svg><use href="#i-package"/></svg>Catálogo de modelos</h2>
+          <div class="btn-row"><button class="btn ghost xs" data-folder="models" type="button"><svg><use href="#i-folder"/></svg>Carpeta de modelos</button><button class="btn ghost xs" data-folder="adapters" type="button"><svg><use href="#i-folder"/></svg>Adaptadores LoRA</button></div></div>
+        <div class="tabs" id="roleTabs" role="tablist"></div>
+        <p class="hint" id="roleHelp"></p>
+        <div class="model-table" id="modelTable"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================================ REPRODUCTOR ================================ -->
+<footer class="player" id="player" aria-label="Reproductor">
+  <div class="p-left">
+    <div class="p-cover" id="pCover"><canvas id="pViz" width="112" height="112"></canvas></div>
+    <div class="p-meta">
+      <div class="p-title" id="pTitle">Nada sonando</div>
+      <div class="p-sub" id="pSub">Crea una canción o elige una de la biblioteca</div>
+    </div>
+    <button class="icon-btn" id="pFav" type="button" aria-label="Favorita"><svg><use href="#i-heart"/></svg></button>
+  </div>
+  <div class="p-center">
+    <div class="p-controls">
+      <button class="icon-btn" id="pPrev" type="button" aria-label="Anterior"><svg><use href="#i-prev"/></svg></button>
+      <button class="play-btn" id="pPlay" type="button" aria-label="Reproducir"><svg><use href="#i-play"/></svg></button>
+      <button class="icon-btn" id="pNext" type="button" aria-label="Siguiente"><svg><use href="#i-next"/></svg></button>
+    </div>
+    <div class="p-seek">
+      <span id="pTime">0:00</span>
+      <input type="range" id="pSeek" min="0" max="1000" value="0" aria-label="Posición">
+      <span id="pDur">0:00</span>
+    </div>
+  </div>
+  <div class="p-right">
+    <button class="icon-btn" id="pMute" type="button" aria-label="Silenciar"><svg><use href="#i-volume"/></svg></button>
+    <input type="range" id="pVol" min="0" max="1" step="0.01" value="0.9" aria-label="Volumen">
+    <a class="icon-btn" id="pDownload" aria-label="Descargar"><svg><use href="#i-download"/></svg></a>
+  </div>
+</footer>
+
+<!-- ============================== DETALLE CANCIÓN ============================== -->
+<dialog class="dialog" id="songDialog" aria-labelledby="dTitle">
+  <div class="d-inner">
+    <button class="icon-btn d-close" type="button" data-close aria-label="Cerrar"><svg><use href="#i-x"/></svg></button>
+    <div class="d-head">
+      <div class="d-cover" id="dCover"><button class="play-btn" id="dPlay" type="button" aria-label="Reproducir"><svg><use href="#i-play"/></svg></button></div>
+      <div class="d-meta">
+        <h2 id="dTitle">—</h2>
+        <div class="d-date" id="dDate"></div>
+        <div class="badges" id="dBadges"></div>
+        <div class="btn-row wrap">
+          <button class="btn primary sm" id="dReuse" type="button"><svg><use href="#i-reuse"/></svg>Reutilizar ajustes</button>
+          <button class="btn ghost sm" id="dReuseSeed" type="button"><svg><use href="#i-lock"/></svg>Con la misma semilla</button>
+          <button class="btn ghost sm" id="dRemix" type="button"><svg><use href="#i-wave"/></svg>Remix / cover</button>
+          <button class="btn ghost sm" id="dRename" type="button"><svg><use href="#i-edit"/></svg>Renombrar</button>
+          <a class="btn ghost sm" id="dDownload"><svg><use href="#i-download"/></svg>Descargar</a>
+          <button class="btn danger sm" id="dDelete" type="button"><svg><use href="#i-trash"/></svg>Eliminar</button>
+        </div>
+      </div>
+    </div>
+    <div class="d-body">
+      <div>
+        <h3>Descripción</h3>
+        <p class="d-caption" id="dCaption"></p>
+        <h3>Letra</h3>
+        <pre class="d-lyrics" id="dLyrics"></pre>
+      </div>
+      <div>
+        <h3>Parámetros</h3>
+        <dl class="kv" id="dParams"></dl>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="dialog small" id="promptDialog">
+  <form method="dialog" class="d-inner">
+    <h2 id="pdTitle">—</h2>
+    <label class="fld"><span id="pdLabel"></span><input type="text" id="pdInput" maxlength="120" required></label>
+    <div class="btn-row end">
+      <button class="btn ghost sm" value="cancel" type="submit" formnovalidate>Cancelar</button>
+      <button class="btn primary sm" value="ok" type="submit" id="pdOk">Aceptar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="menu" id="menu" role="menu" hidden></div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<audio id="audio" preload="metadata"></audio>
+<script type="module" src="app.js?v=1.1.0"></script>
+</body>
+</html>
